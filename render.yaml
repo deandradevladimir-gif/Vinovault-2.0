@@ -1,0 +1,28 @@
+# Blueprint de Render para la API de VinoVault.
+# Render > New > Blueprint > seleccionar este repositorio.
+services:
+  - type: web
+    name: vinovault-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Orígenes permitidos por CORS, separados por comas (URL del frontend en Vercel)
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: EXCHANGE_RATE_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false

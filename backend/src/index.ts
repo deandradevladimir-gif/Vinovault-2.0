@@ -23,11 +23,15 @@ const app = express();
 // Convertimos el PORT a número para que TypeScript y Express no tengan problemas.
 const PORT = parseInt(process.env.PORT || '5001');
 
-// Configuración de CORS
+// Configuración de CORS: orígenes permitidos separados por comas en CORS_ORIGINS
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 const corsOptions = {
-  origin: ['http://localhost:5173', 'https://vino-vault2-0.vercel.app'],
-  
-  
+  origin: allowedOrigins,
+
   // Métodos permitidos
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   
@@ -76,9 +80,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
     }
 });
 
-// Iniciar el servidor
+// Iniciar el servidor (Render asigna el puerto con la variable PORT)
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor de VinoVault corriendo en el puerto ${PORT}`);
 });
-
-//Servidor de VinoVault en Vercel

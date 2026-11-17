@@ -174,7 +174,7 @@ El script completo de creación está en [`backend/database/schema.sql`](backend
 
 **Backend:** Node.js · Express 5 · TypeScript · PostgreSQL (`pg`) · JWT · bcryptjs · Multer · Supabase Storage · ExchangeRate-API
 
-**Despliegue:** frontend en Vercel
+**Despliegue:** frontend en Vercel · API en Render ([`render.yaml`](render.yaml)) · PostgreSQL y Storage en Supabase
 
 ## Ejecución local
 

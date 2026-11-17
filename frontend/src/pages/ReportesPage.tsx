@@ -12,7 +12,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useAuth, axiosInstance } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatCurrency';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 import logo from '../assets/logo.png';
 import jsPDF from 'jspdf';
@@ -93,8 +93,8 @@ const ReportesPage = () => {
   const handleGenerarReporte = async () => {
     if (tabValue === 0) {
       // Reporte de ventas
-      if (!fechaInicio || !fechaFin) {
-        showNotification('Por favor, selecciona ambas fechas.', 'warning');
+      if (!fechaInicio || !fechaFin || !isValid(fechaInicio) || !isValid(fechaFin)) {
+        showNotification('Por favor, ingresa dos fechas válidas.', 'warning');
         return;
       }
 
@@ -400,7 +400,7 @@ const ReportesPage = () => {
                 <Typography variant="body1" sx={{ color: '#000 !important' }}>
                   Fecha de generación: {format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}
                 </Typography>
-                {fechaInicio && fechaFin && (
+                {fechaInicio && fechaFin && isValid(fechaInicio) && isValid(fechaFin) && (
                   <Typography variant="body1" sx={{ color: '#000 !important' }}>
                     Período: {format(fechaInicio, 'dd/MM/yyyy', { locale: es })} - {format(fechaFin, 'dd/MM/yyyy', { locale: es })}
                   </Typography>

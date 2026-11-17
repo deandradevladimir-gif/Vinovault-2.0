@@ -76,6 +76,17 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, venta, onClose }) => 
         fetchRates();
     }, []);
 
+    // Los importes de una venta siempre llegan en USD (así se guardan en la BD);
+    // se convierten una sola vez a la moneda seleccionada.
+    const toCurrency = (usd: string | number): number => {
+        const value = typeof usd === 'string' ? parseFloat(usd) : usd;
+        const rates = exchangeRates || { PYG: 7500, BRL: 5 };
+        if (currency === 'PYG') return value * rates.PYG;
+        if (currency === 'BRL') return value * rates.BRL;
+        return value;
+    };
+    const money = (usd: string | number) => formatCurrency(toCurrency(usd), currency);
+
     const handleButtonClick = () => {
         if (!venta) {
             console.error('❌ No hay datos de venta para imprimir');
@@ -92,13 +103,12 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, venta, onClose }) => 
             items: venta.items.map(item => ({
                 nombre: item.nombre_producto,
                 quantity: item.cantidad,
-                precio_venta: item.precio_unitario,
-                precio_venta_pyg: item.precio_unitario,
-                precio_venta_brl: item.precio_unitario
+                precio_unitario: toCurrency(item.precio_unitario)
             })),
-            subtotal: parseFloat(venta.subtotal),
-            impuesto: parseFloat(venta.impuestos),
-            total: parseFloat(venta.total)
+            subtotal: toCurrency(venta.subtotal),
+            impuesto: toCurrency(venta.impuestos),
+            total: toCurrency(venta.total),
+            currency
         };
 
         handlePrint(printData);
@@ -168,7 +178,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, venta, onClose }) => 
                     </Box>
 
                     {/* Tabla más compacta */}
-                    <TableContainer component={Paper} elevation={1} sx={{ my: 2, border: '1px solid #ddd' }}>
+                    <TableContainer component={Paper} elevation={1} sx={{ my: 2, border: '1px solid #ddd', bgcolor: '#fff', backgroundImage: 'none' }}>
                         <Table size="small">
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: brandColor }}>
@@ -180,28 +190,14 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, venta, onClose }) => 
                             </TableHead>
                             <TableBody>
                                 {venta?.items.map((item, index) => (
-                                    <TableRow key={index} sx={{ '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
-                                        <TableCell sx={{ fontSize: '0.85rem', py: 1, color: 'black' }}>{item.nombre_producto}</TableCell>
-                                        <TableCell align="center" sx={{ fontSize: '0.85rem', py: 1, color: 'black' }}>{item.cantidad}</TableCell>
-                                        <TableCell align="right" sx={{ fontSize: '0.85rem', py: 1, color: 'black' }}>
-                                            {(() => {
-                                                const priceUSD = parseFloat(item.precio_unitario);
-                                                const rates = exchangeRates || { PYG: 7500, BRL: 5 };
-                                                let convertedPrice = priceUSD;
-                                                if (currency === 'PYG') convertedPrice = priceUSD * rates.PYG;
-                                                if (currency === 'BRL') convertedPrice = priceUSD * rates.BRL;
-                                                return formatCurrency(convertedPrice, currency);
-                                            })()}
+                                    <TableRow key={index} sx={{ backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#fff' }}>
+                                        <TableCell sx={{ fontSize: '0.85rem', py: 1, color: 'black', borderColor: '#e0e0e0' }}>{item.nombre_producto}</TableCell>
+                                        <TableCell align="center" sx={{ fontSize: '0.85rem', py: 1, color: 'black', borderColor: '#e0e0e0' }}>{item.cantidad}</TableCell>
+                                        <TableCell align="right" sx={{ fontSize: '0.85rem', py: 1, color: 'black', borderColor: '#e0e0e0' }}>
+                                            {money(item.precio_unitario)}
                                         </TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.85rem', py: 1, color: 'black' }}>
-                                            {(() => {
-                                                const priceUSD = parseFloat(item.precio_unitario);
-                                                const rates = exchangeRates || { PYG: 7500, BRL: 5 };
-                                                let convertedPrice = priceUSD;
-                                                if (currency === 'PYG') convertedPrice = priceUSD * rates.PYG;
-                                                if (currency === 'BRL') convertedPrice = priceUSD * rates.BRL;
-                                                return formatCurrency(convertedPrice * item.cantidad, currency);
-                                            })()}
+                                        <TableCell align="right" sx={{ fontWeight: 'bold', fontSize: '0.85rem', py: 1, color: 'black', borderColor: '#e0e0e0' }}>
+                                            {money(parseFloat(item.precio_unitario) * item.cantidad)}
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -217,24 +213,10 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, venta, onClose }) => 
                         textAlign: 'right'
                     }}>
                         <Typography variant="body1" sx={{ mb: 0.5, fontWeight: 500, color: 'black' }}>
-                            Subtotal: {venta ? (() => {
-                                const subtotalUSD = parseFloat(venta.subtotal);
-                                const rates = exchangeRates || { PYG: 7500, BRL: 5 };
-                                let converted = subtotalUSD;
-                                if (currency === 'PYG') converted = subtotalUSD * rates.PYG;
-                                if (currency === 'BRL') converted = subtotalUSD * rates.BRL;
-                                return formatCurrency(converted, currency);
-                            })() : '$0.00'}
+                            Subtotal: {venta ? money(venta.subtotal) : '$0.00'}
                         </Typography>
                         <Typography variant="body1" sx={{ mb: 1, fontWeight: 500, color: 'black' }}>
-                            IVA (10%): {venta ? (() => {
-                                const impuestoUSD = parseFloat(venta.impuestos);
-                                const rates = exchangeRates || { PYG: 7500, BRL: 5 };
-                                let converted = impuestoUSD;
-                                if (currency === 'PYG') converted = impuestoUSD * rates.PYG;
-                                if (currency === 'BRL') converted = impuestoUSD * rates.BRL;
-                                return formatCurrency(converted, currency);
-                            })() : '$0.00'}
+                            IVA (10%): {venta ? money(venta.impuestos) : '$0.00'}
                         </Typography>
                         <Typography variant="h5" sx={{
                             fontWeight: 'bold',
@@ -245,14 +227,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, venta, onClose }) => 
                             display: 'inline-block',
                             minWidth: '200px'
                         }}>
-                            TOTAL: {venta ? (() => {
-                                const totalUSD = parseFloat(venta.total);
-                                const rates = exchangeRates || { PYG: 7500, BRL: 5 };
-                                let converted = totalUSD;
-                                if (currency === 'PYG') converted = totalUSD * rates.PYG;
-                                if (currency === 'BRL') converted = totalUSD * rates.BRL;
-                                return formatCurrency(converted, currency);
-                            })() : '$0.00'}
+                            TOTAL: {venta ? money(venta.total) : '$0.00'}
                         </Typography>
                     </Box>
 

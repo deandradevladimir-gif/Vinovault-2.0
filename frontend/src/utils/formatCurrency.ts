@@ -3,8 +3,10 @@
 export type Currency = 'USD' | 'PYG' | 'BRL';
 
 export const formatCurrency = (value: string | number, currencyCode: Currency): string => {
-  // 1. Convierte a número y redondea, por si acaso
-  const numberValue = Math.round(typeof value === 'string' ? parseFloat(value) : value);
+  // 1. Convierte a número. Solo el guaraní se redondea (no usa decimales);
+  //    USD y BRL conservan los centavos.
+  const parsed = typeof value === 'string' ? parseFloat(value) : value;
+  const numberValue = currencyCode === 'PYG' ? Math.round(parsed) : Math.round(parsed * 100) / 100;
 
   // 2. Si el resultado no es un número, retorna 'N/A'
   if (isNaN(numberValue)) {

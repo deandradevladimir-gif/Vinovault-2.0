@@ -101,11 +101,12 @@ const CheckoutModal = ({ open, onClose, onSaleComplete }: CheckoutModalProps) =>
   useEffect(() => {
     const fetchExchangeRates = async () => {
       try {
-        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-        const data = await response.json();
+        // Mismas tasas que usa el backend para los precios del catálogo,
+        // así el total del carrito y el del comprobante coinciden.
+        const response = await axiosInstance.get('/dashboard/exchange-rates');
         setExchangeRates({
-          PYG: data.rates.PYG || 7500,
-          BRL: data.rates.BRL || 5
+          PYG: response.data.PYG || 7500,
+          BRL: response.data.BRL || 5
         });
       } catch (error) {
         console.error('Error fetching exchange rates:', error);
@@ -221,39 +222,22 @@ const CheckoutModal = ({ open, onClose, onSaleComplete }: CheckoutModalProps) =>
   const handleOpenReceiptModal = () => {
     if (!saleSuccessData) return;
 
-    // Convertir valores a la moneda seleccionada
-    const rates = exchangeRates || { PYG: 7500, BRL: 5 };
-    let convertedSubtotal = saleSuccessData.subtotal;
-    let convertedImpuesto = saleSuccessData.impuesto;
-    let convertedTotal = saleSuccessData.total;
-
-    if (currency === 'PYG') {
-      convertedSubtotal = saleSuccessData.subtotal * rates.PYG;
-      convertedImpuesto = saleSuccessData.impuesto * rates.PYG;
-      convertedTotal = saleSuccessData.total * rates.PYG;
-    } else if (currency === 'BRL') {
-      convertedSubtotal = saleSuccessData.subtotal * rates.BRL;
-      convertedImpuesto = saleSuccessData.impuesto * rates.BRL;
-      convertedTotal = saleSuccessData.total * rates.BRL;
-    }
-
-    // Convertir datos al formato que espera ReceiptModal
+    // ReceiptModal recibe los importes en USD (igual que desde el Historial)
+    // y los convierte él mismo a la moneda seleccionada.
     const receiptVenta = {
       id: saleSuccessData.ventaId,
       fecha_venta: new Date().toISOString(),
       cliente_nombre: saleSuccessData.clientName,
       usuario_nombre: saleSuccessData.vendedor || user?.nombre_completo || 'Usuario',
       almacen_nombre: saleSuccessData.almacenName,
-      subtotal: convertedSubtotal.toString(),
-      impuestos: convertedImpuesto.toString(),
-      total: convertedTotal.toString(),
-      moneda: currency,
+      subtotal: saleSuccessData.subtotal.toString(),
+      impuestos: saleSuccessData.impuesto.toString(),
+      total: saleSuccessData.total.toString(),
+      moneda: 'USD',
       items: saleSuccessData.items.map((item: any) => ({
         nombre_producto: item.nombre,
         cantidad: item.quantity,
-        precio_unitario: currency === 'PYG' ? (parseFloat(item.precio_venta) * rates.PYG).toString() :
-          currency === 'BRL' ? (parseFloat(item.precio_venta) * rates.BRL).toString() :
-            item.precio_venta
+        precio_unitario: item.precio_venta
       }))
     };
 

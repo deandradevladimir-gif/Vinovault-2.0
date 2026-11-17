@@ -6,7 +6,7 @@
 
 **Sistema web de gestión de inventario y ventas para distribuidoras de vinos**
 
-[![Demo](https://img.shields.io/badge/demo-vino--vault2--0.vercel.app-7b1e3a?style=for-the-badge)](https://vino-vault2-0.vercel.app)
+[![Demo](https://img.shields.io/badge/demo-vinovault.vercel.app-7b1e3a?style=for-the-badge)](https://vinovault.vercel.app)
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)

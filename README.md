@@ -1,415 +1,272 @@
-# 🍷 VinoVault
+<div align="center">
 
-**Proyecto:** VinoVault: Aplicación web para gestión de stock y ventas de vinos.  
-**Autor:** Vladimir De Andrade  
+<img src="frontend/src/assets/logo.png" alt="VinoVault" width="120" />
+
+# VinoVault
+
+**Sistema web de gestión de inventario y ventas para distribuidoras de vinos**
+
+[![Demo](https://img.shields.io/badge/demo-vino--vault2--0.vercel.app-7b1e3a?style=for-the-badge)](https://vino-vault2-0.vercel.app)
+
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![MUI](https://img.shields.io/badge/Material_UI-007FFF?logo=mui&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
+![License](https://img.shields.io/badge/licencia-BSD--3-blue)
+
+</div>
 
 ---
 
-## 📝 Descripción
+## Sobre el proyecto
 
-**VinoVault** es una aplicación **web full-stack** desarrollada con **React (Vite) + Node.js (Express)** y base de datos **PostgreSQL**, orientada a facilitar la gestión de inventario, control de ventas y registro de productos para vendedores o distribuidores de vinos.  
+VinoVault es una aplicación **full-stack** escrita íntegramente en **TypeScript** que centraliza la operación diaria de una distribuidora de vinos: catálogo de productos, stock en varios almacenes, clientes, ventas con emisión de recibos y reportes.
 
-El sistema permite **registrar productos, controlar el stock, gestionar clientes, registrar ventas** y consultar el historial de movimientos.  
-Está desarrollada íntegramente en **TypeScript**, garantizando un código más limpio, seguro y mantenible.
+Está pensada para un contexto real de frontera, por lo que **opera en tres monedas (USD, PYG y BRL)** con tasas de cambio obtenidas en tiempo real de una API externa.
 
----
+## Capturas
 
-## ⚙️ Instalación y ejecución
+![Dashboard con inventario y precios en tres monedas](docs/screenshots/dashboard.webp)
 
-### 🔹 1. Clonar el repositorio
-```bash
-git clone https://github.com/usuario/vino_stock_app.git
-cd vino_stock_app
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/checkout.webp" alt="Carrito y checkout en guaraníes" /><br/><sub><b>Checkout</b>: cliente, almacén de origen, moneda e IVA automático</sub></td>
+    <td width="50%"><img src="docs/screenshots/reportes.webp" alt="Reporte de ventas por rango de fechas" /><br/><sub><b>Reportes</b>: resumen y detalle por período, exportable a PDF</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/receipt.webp" alt="Comprobante de venta" /><br/><sub><b>Comprobante</b> imprimible en la moneda de la venta</sub></td>
+    <td width="50%"><img src="docs/screenshots/cliente.webp" alt="Perfil de cliente" /><br/><sub><b>Perfil de cliente</b> con historial de compras y gasto total en USD, PYG y BRL</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/historial.webp" alt="Historial de ventas" /><br/><sub><b>Historial</b>: ventas con vendedor, estado y reimpresión de comprobante</sub></td>
+    <td width="50%"><img src="docs/screenshots/dashboard-light.webp" alt="Tema claro" /><br/><sub><b>Tema claro</b>, además del oscuro</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/login.webp" alt="Pantalla de inicio de sesión" /><br/><sub><b>Login</b> con autenticación JWT</sub></td>
+    <td width="50%" align="center"><img src="docs/screenshots/mobile.webp" alt="Vista móvil" width="200" /><br/><sub><b>Diseño responsive</b></sub></td>
+  </tr>
+</table>
+
+<sub>Capturas tomadas con datos de ejemplo ficticios.</sub>
+
+## Funcionalidades
+
+| Área | Qué permite |
+|---|---|
+| **Autenticación y roles** | Login con JWT y contraseñas cifradas con bcrypt. Rol **admin** (gestión de usuarios y alta de cuentas) y rol **vendedor**, con rutas protegidas en frontend y backend. |
+| **Productos** | Alta, edición y baja de productos con SKU único, precios de compra y venta, e imágenes almacenadas en **Supabase Storage**. |
+| **Inventario multi-almacén** | Stock por producto y almacén, ajustes de entrada/salida e **historial de movimientos** con el usuario responsable. |
+| **Ventas** | Carrito, checkout con selección de cliente y moneda, e **impresión de recibos** (adaptada también a móvil). Los importes se guardan siempre en USD y se convierten al mostrarlos, con una única fuente de tasas de cambio. Cada venta descuenta el stock **dentro de una transacción**, de modo que nunca queda a medias. |
+| **Clientes** | Gestión de clientes locales y extranjeros (RUC) y perfil con su historial de compras. |
+| **Dashboard** | Indicadores de stock y ventas y tasas de cambio del día. |
+| **Reportes** | Reportes de ventas y de stock filtrados por rango de fechas, **exportables a PDF**. |
+| **Interfaz** | Diseño responsive con Material UI y tema claro/oscuro. |
+
+## Arquitectura
+
+```mermaid
+flowchart LR
+    U([Usuario]) --> FE
+
+    subgraph Vercel
+        FE["Frontend<br/>React + Vite + MUI"]
+    end
+
+    FE -- "REST + JWT (Axios)" --> API
+
+    subgraph Backend
+        API["API REST<br/>Node.js + Express"]
+    end
+
+    API --> DB[(PostgreSQL)]
+    API --> ST[["Supabase Storage<br/>imágenes"]]
+    API --> FX{{"ExchangeRate-API<br/>USD · PYG · BRL"}}
 ```
 
-### 🔹 2. Instalar dependencias del frontend
+El backend sigue una separación en capas **routes → controllers → services**, con middlewares para autenticación, autorización por rol y subida de archivos.
+
+## Modelo de datos
+
+```mermaid
+erDiagram
+    USUARIOS ||--o{ VENTAS : registra
+    USUARIOS ||--o{ MOVIMIENTOS_STOCK : realiza
+    CLIENTES ||--o{ VENTAS : compra
+    ALMACENES ||--o{ INVENTARIO : contiene
+    ALMACENES ||--o{ MOVIMIENTOS_STOCK : afecta
+    ALMACENES ||--o{ VENTAS : origen
+    PRODUCTOS ||--o{ INVENTARIO : "stock en"
+    PRODUCTOS ||--o{ MOVIMIENTOS_STOCK : referencia
+    PRODUCTOS ||--o{ VENTA_ITEMS : "se vende en"
+    VENTAS ||--|{ VENTA_ITEMS : compone
+
+    USUARIOS {
+        int id PK
+        string email UK
+        string contrasena_hash
+        string nombre_completo
+        string rol
+        bool activo
+    }
+    CLIENTES {
+        int id PK
+        string nombre
+        string ruc
+        string telefono
+        string email
+        bool es_extranjero
+    }
+    PRODUCTOS {
+        int id PK
+        string sku UK
+        string nombre
+        decimal precio_compra
+        decimal precio_venta
+        string imagen_url
+    }
+    ALMACENES {
+        int id PK
+        string nombre
+        string ubicacion
+    }
+    INVENTARIO {
+        int producto_id PK, FK
+        int almacen_id PK, FK
+        int cantidad
+    }
+    MOVIMIENTOS_STOCK {
+        int id PK
+        int producto_id FK
+        int almacen_id FK
+        int usuario_id FK
+        string tipo_movimiento
+        int cantidad
+    }
+    VENTAS {
+        int id PK
+        int cliente_id FK
+        int usuario_id FK
+        int almacen_id FK
+        string moneda
+        decimal subtotal
+        decimal impuesto
+        decimal total
+        string estado
+    }
+    VENTA_ITEMS {
+        int id PK
+        int venta_id FK
+        int producto_id FK
+        int cantidad
+        decimal precio_unitario
+    }
+```
+
+El script completo de creación está en [`backend/database/schema.sql`](backend/database/schema.sql).
+
+## Stack técnico
+
+**Frontend:** React 18 · TypeScript · Vite · Material UI · React Router · Context API (auth, carrito, tema) · Axios · jsPDF + html2canvas · react-to-print
+
+**Backend:** Node.js · Express 5 · TypeScript · PostgreSQL (`pg`) · JWT · bcryptjs · Multer · Supabase Storage · ExchangeRate-API
+
+**Despliegue:** frontend en Vercel
+
+## Ejecución local
+
+**Requisitos:** Node.js 18+, PostgreSQL y un proyecto de Supabase con un bucket de Storage para las imágenes.
+
+```bash
+git clone https://github.com/deandradevladimir-gif/Vinovault-2.0.git
+cd Vinovault-2.0
+```
+
+**1. Base de datos**
+
+```bash
+createdb vinovault
+psql -d vinovault -f backend/database/schema.sql
+```
+
+**2. Backend:** crea `backend/.env`:
+
+```env
+PORT=5001
+DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/vinovault
+JWT_SECRET=una_clave_larga_y_aleatoria
+EXCHANGE_RATE_API_KEY=tu_api_key        # https://www.exchangerate-api.com
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_ANON_KEY=tu_anon_key
+```
+
+```bash
+cd backend
+npm install
+npm run dev        # http://localhost:5001  ·  comprobación: /api/health
+```
+
+**3. Frontend:** crea `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:5001/api
+VITE_API_BASE_URL=http://localhost:5001
+```
+
 ```bash
 cd frontend
 npm install
+npm run dev        # http://localhost:5173
 ```
 
-### 🔹 3. Instalar dependencias del backend
-```bash
-cd ../backend
-npm install
-```
-
-### 🔹 4. Configurar variables de entorno
-
-Crear un archivo `.env` en la carpeta **backend** con los siguientes valores:
-
-```env
-PORT=5000
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASS=tu_contraseña
-DB_NAME=vino_stock
-JWT_SECRET=clave_secreta
-EXCHANGE_API_KEY=tu_api_key
-```
-
-### 🔹 5. Crear la base de datos en PostgreSQL
-
-Antes de ejecutar el backend, asegurate de crear la base de datos manualmente en PostgreSQL.  
-Podés hacerlo desde **pgAdmin**, **DBeaver**, o la terminal de PostgreSQL:
-
-```sql
--- 1. Limpieza inicial (Cuidado: borra todo si ya existe)
-DROP TABLE IF EXISTS venta_items CASCADE;
-DROP TABLE IF EXISTS ventas CASCADE;
-DROP TABLE IF EXISTS movimientos_stock CASCADE;
-DROP TABLE IF EXISTS inventario CASCADE;
-DROP TABLE IF EXISTS usuarios CASCADE;
-DROP TABLE IF EXISTS productos CASCADE;
-DROP TABLE IF EXISTS clientes CASCADE;
-DROP TABLE IF EXISTS almacenes CASCADE;
-
--- 2. Tablas Independientes (No dependen de otras)
-
-CREATE TABLE almacenes (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(255) NOT NULL,
-    ubicacion TEXT
-);
-
-CREATE TABLE clientes (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(255) NOT NULL,
-    ruc VARCHAR(50),
-    telefono VARCHAR(50),
-    email VARCHAR(255),
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    es_extranjero BOOLEAN DEFAULT false
-);
-
-CREATE TABLE productos (
-    id SERIAL PRIMARY KEY,
-    sku VARCHAR(100) NOT NULL UNIQUE, -- El SKU debe ser único
-    nombre VARCHAR(255) NOT NULL,
-    descripcion TEXT,
-    precio_compra NUMERIC(10,2),
-    precio_venta NUMERIC(10,2),
-    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    imagen_url VARCHAR(255)
-);
-
-CREATE TABLE usuarios (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    contrasena_hash VARCHAR(255) NOT NULL,
-    nombre_completo VARCHAR(255),
-    rol VARCHAR(50) DEFAULT 'vendedor' NOT NULL,
-    activo BOOLEAN DEFAULT true,
-    fecha_creacion TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- 3. Tablas Dependientes (Tienen Foreign Keys)
-
-CREATE TABLE inventario (
-    producto_id INTEGER NOT NULL,
-    almacen_id INTEGER NOT NULL,
-    cantidad INTEGER DEFAULT 0 NOT NULL,
-    fecha_actualizacion TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    -- Llave primaria compuesta
-    PRIMARY KEY (producto_id, almacen_id),
-    -- Relaciones
-    CONSTRAINT fk_inventario_producto FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE CASCADE,
-    CONSTRAINT fk_inventario_almacen FOREIGN KEY (almacen_id) REFERENCES almacenes(id) ON DELETE CASCADE
-);
-
-CREATE TABLE movimientos_stock (
-    id SERIAL PRIMARY KEY,
-    producto_id INTEGER NOT NULL,
-    almacen_id INTEGER NOT NULL,
-    usuario_id INTEGER, -- Puede ser nulo si se borra el usuario
-    tipo_movimiento VARCHAR(50) NOT NULL, -- Ejemplo: 'Entrada', 'Salida', 'Ajuste'
-    cantidad INTEGER NOT NULL,
-    fecha_movimiento TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    -- Relaciones
-    CONSTRAINT fk_movimiento_producto FOREIGN KEY (producto_id) REFERENCES productos(id) ON DELETE SET NULL,
-    CONSTRAINT fk_movimiento_almacen FOREIGN KEY (almacen_id) REFERENCES almacenes(id) ON DELETE SET NULL,
-    CONSTRAINT fk_movimiento_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
-);
-
-CREATE TABLE ventas (
-    id SERIAL PRIMARY KEY,
-    cliente_id INTEGER,
-    usuario_id INTEGER,
-    almacen_id INTEGER,
-    fecha_venta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    moneda VARCHAR(3) DEFAULT 'USD',
-    subtotal NUMERIC(10,2),
-    impuesto NUMERIC(10,2),
-    total NUMERIC(10,2) NOT NULL,
-    estado VARCHAR(50) DEFAULT 'Completada',
-    -- Relaciones
-    CONSTRAINT fk_ventas_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id),
-    CONSTRAINT fk_ventas_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
-    CONSTRAINT fk_ventas_almacen FOREIGN KEY (almacen_id) REFERENCES almacenes(id)
-);
-
-CREATE TABLE venta_items (
-    id SERIAL PRIMARY KEY,
-    venta_id INTEGER NOT NULL,
-    producto_id INTEGER NOT NULL,
-    cantidad INTEGER NOT NULL,
-    precio_unitario NUMERIC(10,2) NOT NULL,
-    -- Relaciones
-    CONSTRAINT fk_items_venta FOREIGN KEY (venta_id) REFERENCES ventas(id) ON DELETE CASCADE, -- Si borro venta, borro sus items
-    CONSTRAINT fk_items_producto FOREIGN KEY (producto_id) REFERENCES productos(id)
-);
-
--- 4. Índices para mejorar rendimiento (Opcional pero recomendado)
-CREATE INDEX idx_productos_nombre ON productos(nombre);
-CREATE INDEX idx_ventas_fecha ON ventas(fecha_venta);
-```
-
-### 🔹 7. Iniciar el backend
-```bash
-npm run dev
-```
-
-### 🔹 8. Iniciar el frontend
-```bash
-cd ../frontend
-npm run dev
-```
-
----
-
-## 🧩 Tecnologías y dependencias principales
-
-### 🌐 **Frontend (React + Vite + TypeScript)**
-
-| Categoría | Tecnología | Descripción |
-|------------|-------------|--------------|
-| Framework/Librería | **React** | Construcción de la interfaz y componentes dinámicos |
-| Lenguaje | **TypeScript** | Tipado estático para un código más robusto |
-| Estilo visual | **Material UI (MUI)** | Componentes de diseño moderno (botones, tablas, formularios) |
-| Comunicación con backend | **Axios** | Peticiones HTTP hacia la API REST |
-| Ruteo | **React Router DOM** | Navegación entre páginas (Login, Dashboard, Historial, etc.) |
-| Estado global | **React Context API** | Manejo de usuario, tema y datos globales |
-| Tokens | **jwt-decode** | Decodificación de JWT para obtener datos del usuario |
-| Paquetería | **npm** | Gestión de dependencias del proyecto |
-
----
-
-### ⚙️ **Backend (Node.js + Express + TypeScript)**
-
-| Categoría | Tecnología | Descripción |
-|------------|-------------|--------------|
-| Entorno | **Node.js** | Ejecución del servidor |
-| Framework | **Express.js** | Creación de la API REST |
-| Lenguaje | **TypeScript** | Código más seguro y estructurado |
-| Base de datos | **PostgreSQL** | Almacenamiento relacional de datos |
-| ORM/Driver | **pg** | Conexión directa con PostgreSQL |
-| Autenticación | **jsonwebtoken + bcryptjs** | JWT para sesión, bcrypt para contraseñas |
-| Carga de archivos | **multer** | Subida de imágenes de productos |
-| Peticiones externas | **axios** | Consultas a la API de tasas de cambio |
-| Seguridad | **cors** | Control de acceso entre dominios |
-| Configuración | **dotenv** | Variables de entorno |
-| Paquetería | **npm** | Gestión de dependencias del backend |
-
----
-
-## 🧾 Diagrama de Clases
-```mermaid
-classDiagram
-    %% Relaciones
-    Usuario "1" --> "*" Venta : Gestiona
-    Usuario "1" --> "*" MovimientoStock : Autoriza
-    Cliente "1" --> "*" Venta : Relaciona
-    
-    Almacen "1" --> "*" Inventario : Contiene
-    Almacen "1" --> "*" MovimientoStock : Ubicacion
-    Almacen "1" --> "*" Venta : Origen
-    
-    Producto "1" --> "*" Inventario : Listado en
-    Producto "1" --> "*" VentaItem : Se vende en
-    Producto "1" --> "*" MovimientoStock : Referencia
-    
-    Venta "1" *-- "*" VentaItem : Compone
-    
-    %% Definición de Clases
-    
-    class Usuario {
-        +Integer id
-        +String email
-        +String contrasenaHash
-        +String nombreCompleto
-        +String rol
-        +Boolean activo
-        +login(email, pass)
-        +registrarUsuario()
-        +validarRol()
-    }
-
-    class Cliente {
-        +Integer id
-        +String nombre
-        +String ruc
-        +String telefono
-        +String email
-        +Boolean esExtranjero
-        +verHistorialCompras()
-    }
-
-    class Producto {
-        +Integer id
-        +String sku
-        +String nombre
-        +String descripcion
-        +Float precioCompra
-        +Float precioVenta
-        +String imagenUrl
-        +actualizarPrecio()
-        +subirImagen()
-    }
-
-    class Almacen {
-        +Integer id
-        +String nombre
-        +String ubicacion
-        +consultarStockTotal()
-    }
-
-    class Inventario {
-        +Integer productoId
-        +Integer almacenId
-        +Integer cantidad
-        +DateTime fechaActualizacion
-        +verificarDisponibilidad()
-        +actualizarCantidad()
-    }
-
-    class Venta {
-        +Integer id
-        +Integer clienteId
-        +Integer usuarioId
-        +Integer almacenId
-        +DateTime fechaVenta
-        +Float total
-        +Float subtotal
-        +Float impuesto
-        +String estado
-        +String moneda
-        +agregarItem(item)
-        +calcularTotal()
-        +finalizarVenta()
-    }
-
-    class VentaItem {
-        +Integer id
-        +Integer ventaId
-        +Integer productoId
-        +Integer cantidad
-        +Float precioUnitario
-        +calcularSubtotal()
-    }
-
-    class MovimientoStock {
-        +Integer id
-        +Integer productoId
-        +Integer almacenId
-        +Integer usuarioId
-        +String tipoMovimiento
-        +Integer cantidad
-        +DateTime fechaMovimiento
-        +registrarEntrada()
-        +registrarSalida()
-    }
-```
-## 🏗️ Arquitectura general del sistema
+## Estructura del proyecto
 
 ```
-┌───────────────────────────┐
-│     React (Vite + TS)     │
-│     Material UI (MUI)     │
-│  ────────────┬─────────── │
-│    UI y lógica del cliente │
-└──────────────┬────────────┘
-               │
-         Peticiones HTTP (Axios)
-               │
-               ▼
-┌───────────────────────────┐
-│  Node.js + Express (API)  │
-│   Autenticación JWT, CRUD │
-│   Gestión de imágenes     │
-└──────────────┬────────────┘
-               │
-               ▼
-┌───────────────────────────┐
-│       PostgreSQL DB       │
-│ Productos, Ventas, Stock  │
-└───────────────────────────┘
-```
-
----
-
-## 🚀 Funcionalidades principales
-
-- Autenticación segura con JWT.  
-- Registro, edición y eliminación de productos.  
-- Control dinámico del stock de vinos.  
-- Registro de ventas y cálculo automático del inventario.  
-- Panel de control con resumen de stock y ventas.  
-- Consulta de historial de transacciones.  
-- Subida de imágenes con Multer.  
-- Tema claro / oscuro configurable.  
-- Consultas automáticas de tasa de cambio mediante API externa.
-
----
-
-## 🧠 Decisiones técnicas
-
-- **React + Vite:** desarrollo rápido con recarga instantánea y rendimiento optimizado.  
-- **TypeScript:** reducción de errores en tiempo de compilación y mejor mantenibilidad.  
-- **Material UI:** diseño moderno y consistente sin necesidad de CSS manual extenso.  
-- **Context API:** simplifica el manejo del estado global sin necesidad de Redux.  
-- **Node.js + Express:** arquitectura ligera y rápida para la API.  
-- **PostgreSQL:** base de datos relacional robusta y confiable.  
-- **JWT + bcrypt:** autenticación segura y eficiente.  
-
----
-
-## 🧾 Estructura de carpetas
-
-```
-vino_stock_app/
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── context/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   └── App.tsx
-│   └── package.json
-│
+Vinovault-2.0/
 ├── backend/
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── middleware/
-│   │   └── index.ts
-│   └── package.json
-│
-└── README.md
+│   ├── database/
+│   │   └── schema.sql       # Esquema de PostgreSQL
+│   └── src/
+│       ├── config/          # Cliente de Supabase
+│       ├── routes/          # Definición de endpoints
+│       ├── controllers/     # Manejo de peticiones y respuestas
+│       ├── services/        # Lógica de negocio y acceso a datos
+│       ├── middleware/      # JWT, roles y subida de imágenes
+│       └── index.ts         # Servidor Express
+└── frontend/
+    └── src/
+        ├── pages/           # Dashboard, Historial, Reportes, Clientes, Usuarios...
+        ├── components/      # Modales, tarjetas de producto, layout, rutas protegidas
+        ├── context/         # AuthContext, CartContext, ThemeContext
+        ├── hooks/           # Impresión de recibos
+        ├── theme/           # Tema de Material UI
+        └── utils/           # Formato de moneda e imágenes
 ```
 
----
+## API
 
-## 📚 Referencias
+| Recurso | Endpoints principales |
+|---|---|
+| `/api/auth` | `POST /login` · `POST /register` *(admin)* |
+| `/api/productos` | CRUD · `PUT/DELETE /:id/imagen` |
+| `/api/inventario` | `POST /movimiento` · `GET /historial` |
+| `/api/ventas` | `POST /` · `GET /historial` |
+| `/api/clientes` | CRUD · `GET /:id/detalles` |
+| `/api/almacenes` | `GET /` |
+| `/api/users` | Gestión de usuarios *(admin)* |
+| `/api/dashboard` | `GET /stats` · `GET /exchange-rates` |
+| `/api/reportes` | `GET /ventas` · `GET /stock` |
+| `/api/health` | Estado del servidor y de la conexión a la base de datos |
 
-- [React Documentation](https://react.dev/)  
-- [Vite Documentation](https://vitejs.dev/)  
-- [Material UI](https://mui.com/)  
-- [Axios](https://axios-http.com/)  
-- [React Router DOM](https://reactrouter.com/)  
-- [Node.js](https://nodejs.org/)  
-- [Express.js](https://expressjs.com/)  
-- [PostgreSQL](https://www.postgresql.org/)  
-- [TypeScript](https://www.typescriptlang.org/)  
-- [JWT.io](https://jwt.io/)  
+Todos los endpoints, salvo `login` y `health`, requieren el header `Authorization: Bearer <token>`.
+
+## Autor
+
+**Vladimir De Andrade** · [GitHub](https://github.com/deandradevladimir-gif)
+
+## Licencia
+
+Distribuido bajo la licencia BSD 3-Clause. Ver [`LICENSE`](LICENSE).

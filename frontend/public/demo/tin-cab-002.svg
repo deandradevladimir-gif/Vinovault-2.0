@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#3d0a14" stop-opacity=".95"/><stop offset=".45" stop-color="#3d0a14"/><stop offset=".55" stop-color="#ffffff" stop-opacity=".25"/><stop offset=".62" stop-color="#3d0a14"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></linearGradient>
+    <radialGradient id="b" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#efe6f0"/></radialGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#b)"/>
+  <ellipse cx="300" cy="548" rx="95" ry="14" fill="#000" opacity=".12"/>
+  <path d="M272 70 h56 v120 c0 30 62 52 62 112 v236 c0 8-6 14-14 14 h-152 c-8 0-14-6-14-14 v-236 c0-60 62-82 62-112 z" fill="url(#g)"/>
+  <rect x="268" y="56" width="64" height="40" rx="6" fill="#c0c0c0"/>
+  <rect x="226" y="330" width="148" height="132" rx="8" fill="#c0c0c0"/>
+  <rect x="236" y="340" width="128" height="112" rx="5" fill="none" stroke="#3d0a14" stroke-opacity=".5"/>
+  <text x="300" y="392" font-family="Georgia, serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#3d0a14">Cabernet</text>
+  <text x="300" y="422" font-family="Georgia, serif" font-size="13" letter-spacing="3" text-anchor="middle" fill="#3d0a14" opacity=".8">VINOVAULT</text>
+</svg>

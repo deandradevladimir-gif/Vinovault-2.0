@@ -26,37 +26,38 @@ export const getExchangeRates = async () => {
     return cachedRates.rates;
   }
 
-  try {
-    const apiKey = process.env.EXCHANGE_RATE_API_KEY;
-    if (!apiKey) {
-      throw new Error('No se ha configurado la API Key para las tasas de cambio.');
-    }
-
-    console.log('[BACKEND] Obteniendo nuevas tasas de cambio desde ExchangeRate-API...');
-    const apiUrl = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/USD`;
-    
-    const response = await axios.get(apiUrl);
-
-    const ratesData = response.data.conversion_rates;
-
-    if (!ratesData.PYG || !ratesData.BRL) {
-        throw new Error('La respuesta de la API no contiene las monedas requeridas (PYG, BRL).');
-    }
-
-    cachedRates = {
-      rates: {
-        PYG: ratesData.PYG,
-        BRL: ratesData.BRL,
-      },
-      timestamp: now,
-    };
-
-    return cachedRates.rates;
-  } catch (error) {
-    console.error("Error al obtener tasas de cambio:", error);
-    if (cachedRates.rates) {
-      return cachedRates.rates;
-    }
-    throw new Error('No se pudieron obtener las tasas de cambio.');
+  // Fuentes en orden de preferencia: la API con clave (si está configurada)
+  // y, como respaldo, la API pública sin clave del mismo proveedor.
+  const apiKey = process.env.EXCHANGE_RATE_API_KEY?.trim();
+  const sources: { name: string; url: string; field: 'conversion_rates' | 'rates' }[] = [];
+  if (apiKey && apiKey.toLowerCase() !== 'none') {
+    sources.push({ name: 'ExchangeRate-API', url: `https://v6.exchangerate-api.com/v6/${apiKey}/latest/USD`, field: 'conversion_rates' });
   }
+  sources.push({ name: 'open.er-api.com (sin clave)', url: 'https://open.er-api.com/v6/latest/USD', field: 'rates' });
+
+  for (const source of sources) {
+    try {
+      console.log(`[BACKEND] Obteniendo tasas de cambio desde ${source.name}...`);
+      const response = await axios.get(source.url, { timeout: 8000 });
+      const ratesData = response.data?.[source.field];
+
+      if (!ratesData?.PYG || !ratesData?.BRL) {
+        throw new Error('La respuesta no contiene las monedas requeridas (PYG, BRL).');
+      }
+
+      cachedRates = {
+        rates: { PYG: ratesData.PYG, BRL: ratesData.BRL },
+        timestamp: now,
+      };
+      return cachedRates.rates;
+    } catch (error) {
+      console.error(`Error al obtener tasas de cambio desde ${source.name}:`, (error as Error).message);
+    }
+  }
+
+  // Si todas las fuentes fallan, usar la última cotización conocida
+  if (cachedRates.rates) {
+    return cachedRates.rates;
+  }
+  throw new Error('No se pudieron obtener las tasas de cambio.');
 };

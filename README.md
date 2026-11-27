@@ -8,6 +8,8 @@
 
 [![Demo](https://img.shields.io/badge/demo-vinovault.vercel.app-7b1e3a?style=for-the-badge)](https://vinovault.vercel.app)
 
+<sub>La API corre en el plan gratuito de Render: si estuvo inactiva, el primer acceso puede tardar hasta un minuto mientras el servidor arranca.</sub>
+
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)

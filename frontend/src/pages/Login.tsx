@@ -17,6 +17,9 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  // El backend puede estar "dormido" (plan gratuito) y tardar en responder la primera vez
+  const [isSlow, setIsSlow] = useState(false);
   const navigate = useNavigate();
   const { login, showNotification } = useAuth();
   const { mode, toggleTheme } = useCustomTheme();
@@ -24,15 +27,31 @@ const LoginPage = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsLoading(true);
+    const slowTimer = setTimeout(() => setIsSlow(true), 5000);
     try {
       const response = await axios.post(API_URL, {
         email: email,
         contrasena: password,
-      });
+      }, { timeout: 90000 });
       login(response.data.token);
       navigate('/dashboard');
     } catch (err) {
-      showNotification('Credenciales inválidas. Por favor, intenta de nuevo.', 'error');
+      if (axios.isAxiosError(err) && err.response) {
+        if (err.response.status === 401) {
+          showNotification('Correo o contraseña incorrectos.', 'error');
+        } else {
+          const message = (err.response.data as { message?: string })?.message;
+          showNotification(message || `Error del servidor (${err.response.status}). Intenta más tarde.`, 'error');
+        }
+      } else {
+        // Sin respuesta: servidor caído, sin conexión, CORS o tiempo de espera agotado
+        showNotification('No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.', 'error');
+      }
+    } finally {
+      clearTimeout(slowTimer);
+      setIsLoading(false);
+      setIsSlow(false);
     }
   };
 
@@ -148,10 +167,16 @@ const LoginPage = () => {
               fullWidth
               variant="contained"
               size="large"
+              disabled={isLoading}
               sx={{ mt: 4, mb: 2, py: 1.5, fontSize: '1.1rem' }}
             >
-              Ingresar
+              {isLoading ? (isSlow ? 'Iniciando servidor…' : 'Ingresando…') : 'Ingresar'}
             </Button>
+            {isSlow && (
+              <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
+                El servidor se está iniciando. La primera conexión puede tardar hasta un minuto.
+              </Typography>
+            )}
           </Box>
         </Paper>
       </Container>
